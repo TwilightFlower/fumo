@@ -1,0 +1,26 @@
+plugins {
+	id 'eclipse'
+}
+
+subprojects {
+	apply plugin: 'java-library'
+	apply plugin: 'eclipse'
+	
+	if(!project.name.contains('test')) {
+		apply plugin: 'maven-publish'
+	}
+	
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(8)
+		}
+	}
+	
+	repositories {
+		mavenCentral()
+	}
+	
+	group = "io.github.twilightflower.fumo"
+	
+	def asm_version = rootProject.asm_version
+}

@@ -1,0 +1,10 @@
+archivesBaseName = "fumo-core"
+version = "0.1.0"
+
+dependencies {
+	api "org.ow2.asm:asm:${asm_version}"
+	api "org.ow2.asm:asm-tree:${asm_version}"
+	api "org.ow2.asm:asm-commons:${asm_version}"
+	api "org.ow2.asm:asm-util:${asm_version}"
+	api "org.ow2.asm:asm-analysis:${asm_version}"
+}
