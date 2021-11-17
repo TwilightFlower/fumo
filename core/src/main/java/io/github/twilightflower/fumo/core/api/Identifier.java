@@ -2,7 +2,7 @@ package io.github.twilightflower.fumo.core.api;
 
 import java.util.Objects;
 
-public class Identifier {
+public final class Identifier {
 	private final String namespace, path;
 	private final int hashCode;
 	
@@ -24,5 +24,10 @@ public class Identifier {
 		if(!(other instanceof Identifier)) return false;
 		Identifier o = (Identifier) other;
 		return o.hashCode == hashCode && o.namespace.equals(namespace) & o.path.equals(path);
+	}
+	
+	@Override
+	public String toString() {
+		return namespace + ":" + path;
 	}
 }

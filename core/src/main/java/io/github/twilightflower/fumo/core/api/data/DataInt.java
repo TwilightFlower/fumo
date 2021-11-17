@@ -25,4 +25,14 @@ public class DataInt extends DataNumeric {
 	public int getIntValue() {
 		return val;
 	}
+	
+	@Override
+	public int hashCode() {
+		return val;
+	}
+	
+	@Override
+	public String toString() {
+		return Integer.toString(val);
+	}
 }

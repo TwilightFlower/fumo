@@ -1,5 +1,7 @@
 package io.github.twilightflower.fumo.core.api;
 
+import java.nio.file.Path;
+
 import io.github.twilightflower.fumo.core.api.plugin.PluginContainer;
 
 public interface FumoLoader {
@@ -17,4 +19,14 @@ public interface FumoLoader {
 	 * @throws IllegalStateException if the target has already been launched or this method is called from target-side code.
 	 */
 	void registerLaunchProvider(Identifier id, LaunchProvider provider) throws IllegalStateException;
+	
+	/**
+	 * Gets the main directory to load mods from.
+	 */
+	Path getModsDir();
+	
+	/**
+	 * Gets the main directory to load configuration files from.
+	 */
+	Path getConfigDir();
 }

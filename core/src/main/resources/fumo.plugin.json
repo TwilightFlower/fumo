@@ -1,4 +1,5 @@
 {
-	"plugin-id": "fumo",
-	"version": "0.1.0"
+	"id": "fumo",
+	"version": "0.1.0",
+	"plugin-class": "io.github.twilightflower.fumo.core.impl.plugin.BasePlugin"
 }

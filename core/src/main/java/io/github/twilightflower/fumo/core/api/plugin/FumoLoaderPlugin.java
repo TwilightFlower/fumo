@@ -2,7 +2,6 @@ package io.github.twilightflower.fumo.core.api.plugin;
 
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import io.github.twilightflower.fumo.core.api.FumoLoader;
@@ -13,16 +12,13 @@ public interface FumoLoaderPlugin {
 	 * The first method called. Used to pass the loader API interface, which can (and should) be stored.
 	 * @param loader The loader interface
 	 */
-	default void init(FumoLoader loader) {};
+	default void init(FumoLoader loader) {}
 	
 	/**
-	 * Discovers new plugins. Argument maps are unmodifiable. Plugin maps are arrays as version resolution has not yet occurred.
-	 * @param modsDir The mods directory.
-	 * @param thisRound Plugins discovered since this method was last invoked. Key is plugin ID.
-	 * @param all All currently loaded plugins. Key is plugin ID.
-	 * @return Paths to new plugin jars. All paths must support toURL for URLClassLoader.
+	 * Discovers new plugins.
+	 * @return Plugin containers representing new plugins.
 	 */
-	default Set<Path> discoverNewPlugins(Path modsDir, Map<String, PluginContainer[]> thisRound, Map<String, PluginContainer[]> all) {
+	default Set<PluginMetadata> discoverPlugins() {
 		return Collections.emptySet();
 	}
 	
@@ -30,6 +26,13 @@ public interface FumoLoaderPlugin {
 	 * Callback for when plugin loading has finished. Useful for interacting with other plugins.
 	 */
 	default void pluginsLoaded() {}
+	
+	/**
+	 * 
+	 */
+	default Set<Path> discoverNewModPaths() {
+		return Collections.emptySet();
+	}
 	
 	/**
 	 * Callback for plugins to register transformers. 

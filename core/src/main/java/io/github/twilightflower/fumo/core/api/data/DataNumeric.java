@@ -24,4 +24,21 @@ public class DataNumeric extends DataEntry {
 	public double getValue() {
 		return val;
 	}
+	
+	@Override
+	public boolean equals(Object other) {
+		if(!(other instanceof DataNumeric)) return false;
+		DataNumeric o = (DataNumeric) other;
+		return o.val == val;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Double.hashCode(val);
+	}
+	
+	@Override
+	public String toString() {
+		return Double.toString(val);
+	}
 }

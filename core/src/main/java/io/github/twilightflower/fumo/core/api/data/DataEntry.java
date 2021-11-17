@@ -48,4 +48,8 @@ public class DataEntry {
 	public DataList asList() {
 		throw new UnsupportedOperationException();
 	}
+	
+	public DataBoolean asBoolean() {
+		throw new UnsupportedOperationException();
+	}
 }

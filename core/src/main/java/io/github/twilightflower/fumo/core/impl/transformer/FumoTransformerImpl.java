@@ -15,6 +15,10 @@ import io.github.twilightflower.fumo.core.impl.transformer.jar.InternalClassTran
 public class FumoTransformerImpl implements InternalClassTransformer {
 	private final List<ClassTransformer> transformers = new ArrayList<>();
 	
+	public FumoTransformerImpl(List<ClassTransformer> transformers) {
+		this.transformers.addAll(transformers);
+	}
+	
 	@Override
 	public boolean transforms(String className) {
 		for(ClassTransformer t : transformers) {
