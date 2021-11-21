@@ -1,10 +1,11 @@
 package io.github.twilightflower.fumo.core.api.plugin;
 
-import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import io.github.twilightflower.fumo.core.api.FumoLoader;
+import io.github.twilightflower.fumo.core.api.mod.ModMetadata;
 import io.github.twilightflower.fumo.core.api.transformer.TransformerRegistry;
 
 public interface FumoLoaderPlugin {
@@ -30,13 +31,21 @@ public interface FumoLoaderPlugin {
 	/**
 	 * 
 	 */
-	default Set<Path> discoverNewModPaths() {
+	default Set<ModMetadata> discoverMods(Map<String, Set<ModMetadata>> allMods, Set<ModMetadata> newMods) {
 		return Collections.emptySet();
 	}
+	
+	default void modsLoaded() {}
 	
 	/**
 	 * Callback for plugins to register transformers. 
 	 * @param registry Transformer registry
 	 */
 	default void registerTransformers(TransformerRegistry registry) {}
+	
+	/**
+	 * Called immediately before launching the target.
+	 * @param targetClassLoader The target classloader.
+	 */
+	default void preLaunch(ClassLoader targetClassLoader) {}
 }

@@ -14,6 +14,14 @@ public final class Identifier {
 		this.hashCode = (namespace.hashCode() * 29) ^ path.hashCode(); 
 	}
 	
+	public static Identifier fromString(String str) {
+		String[] spl = str.split(":", 2);
+		if(spl.length < 2) {
+			throw new IllegalArgumentException(String.format("String \"%s\" is not a valid Identifier", str));
+		}
+		return new Identifier(spl[0], spl[1]);
+	}
+	
 	@Override
 	public int hashCode() {
 		return hashCode;

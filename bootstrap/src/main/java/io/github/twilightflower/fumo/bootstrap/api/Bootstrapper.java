@@ -2,6 +2,7 @@ package io.github.twilightflower.fumo.bootstrap.api;
 
 import java.io.Closeable;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Set;
 
 /**
@@ -22,9 +23,9 @@ public interface Bootstrapper extends Closeable, AutoCloseable {
 	
 	/**
 	 * 
-	 * @return URLs representing classpath entries for the target side.
+	 * @return Paths representing classpath entries for the target side. (Represents the roots of filesystems to load.)
 	 */
-	Set<URL> targetURLs();
+	Set<Path> targetPaths();
 	
 	/**
 	 * 

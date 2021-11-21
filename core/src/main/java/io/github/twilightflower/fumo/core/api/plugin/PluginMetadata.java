@@ -5,7 +5,6 @@ import static io.github.twilightflower.fumo.core.api.data.codec.Codec.*;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -15,19 +14,39 @@ import com.github.zafarkhaja.semver.Version;
 import io.github.twilightflower.fumo.core.api.data.DataObject;
 import io.github.twilightflower.fumo.core.api.data.DataString;
 import io.github.twilightflower.fumo.core.api.data.codec.Codec;
-import io.github.twilightflower.fumo.core.impl.plugin.PluginContainerImpl;
 import io.github.twilightflower.fumo.core.impl.util.Codecs;
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
 public final class PluginMetadata {
-	public static final Codec<DataObject, PluginMetadata> codec(Path root) {
-		return multi(Util.mhc(PluginMetadata.class), PluginMetadata.class,
-			entry(constant("id", String.class), STRING, DataString.class, true),
-			entry(constant("name", String.class), propogateNull(STRING), DataString.class, false),
-			entry(constant("plugin-class", String.class), STRING, DataString.class, true),
-			entry(constant("version", String.class), compose(STRING, Codecs.VERSION), DataString.class, true),
+	public static Codec<DataObject, PluginMetadata> codec(Path root) {
+		return multi(
+			Util.mhc(PluginMetadata.class), PluginMetadata.class,
+			entry(
+				constant("id"),
+				STRING,
+				DataString.class,
+				true
+			),
+			entry(
+				constant("name"),
+				propogateNull(STRING),
+				DataString.class,
+				false
+			),
+			entry(
+				constant("plugin-class"),
+				STRING,
+				DataString.class,
+				true
+			),
+			entry(
+				constant("version"),
+				compose(STRING, Codecs.VERSION),
+				DataString.class,
+				true
+			),
 			identity(DataObject.class),
-			constant(root, Path.class)
+			constant(root)
 		);
 	}
 	

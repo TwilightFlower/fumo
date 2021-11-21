@@ -6,19 +6,26 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
+import com.github.zafarkhaja.semver.Parser;
+import com.github.zafarkhaja.semver.expr.Expression;
+import com.github.zafarkhaja.semver.expr.ExpressionParser;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -34,6 +41,7 @@ import io.github.twilightflower.fumo.core.api.data.DataString;
 
 public class Util {
 	private static final Gson GSON = new Gson();
+	private static final Parser<Expression> VERSION_EXPR_PARSER = ExpressionParser.newInstance();
 	
 	public static <T, U> Function<T, U> makeSneakyFunction(ExcFn<T, U, ?> ex) {
 		@SuppressWarnings("unchecked")
@@ -44,6 +52,10 @@ public class Util {
 	@SuppressWarnings("unchecked")
 	public static <T> T sneakily(ExcSupplier<T, ?> sup) {
 		return ((ExcSupplier<T, ? extends RuntimeException>) sup).get();
+	}
+	
+	public static Expression parseVersionExpression(String expr) {
+		return VERSION_EXPR_PARSER.parse(expr);
 	}
 	
 	public static MethodHandle mh(Class<?> on, String name) {
@@ -75,6 +87,14 @@ public class Util {
 	public static DataObject readJson(InputStream inStream) {
 		JsonObject obj = GSON.fromJson(new InputStreamReader(inStream), JsonObject.class);
 		return (DataObject) dataFromJson(obj);
+	}
+	
+	public static Set<Path> getDirectoryEntries(Path p) throws IOException {
+		try(DirectoryStream<Path> ds = Files.newDirectoryStream(p)) {
+			Set<Path> paths = new HashSet<>();
+			ds.forEach(paths::add);
+			return paths;
+		}
 	}
 	
 	public static DataEntry dataFromJson(JsonElement json) {

@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -16,7 +17,7 @@ public class Main {
 		try(Bootstrapper bootstrap = loadSingleService(Bootstrapper.class)) {
 			bootstrap.accept(args);
 			Set<URL> loaderPaths = bootstrap.loaderURLs(); 
-			Set<URL> targetPaths = bootstrap.targetURLs();
+			Set<Path> targetPaths = bootstrap.targetPaths();
 			String[] args2 = bootstrap.args();
 			
 			ClassLoader loaderLoader = new URLClassLoader(loaderPaths.toArray(new URL[loaderPaths.size()]));
