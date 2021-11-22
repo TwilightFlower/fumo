@@ -15,14 +15,14 @@ import com.github.zafarkhaja.semver.expr.Expression;
 
 import io.github.twilightflower.fumo.core.api.data.DataObject;
 import io.github.twilightflower.fumo.core.api.data.DataString;
-import io.github.twilightflower.fumo.core.api.data.codec.Codec;
-import io.github.twilightflower.fumo.core.impl.util.Codecs;
+import io.github.twilightflower.fumo.core.api.data.codec.FumoCodec;
+import io.github.twilightflower.fumo.core.impl.util.FumoCodecs;
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
-import static io.github.twilightflower.fumo.core.api.data.codec.Codec.*;
+import static io.github.twilightflower.fumo.core.api.data.codec.FumoCodec.*;
 
 public final class ModMetadata {
-	private static final Codec<DataObject, Set<ModVersionExpression>> EXPR_CODEC =
+	private static final FumoCodec<DataObject, Set<ModVersionExpression>> EXPR_CODEC =
 			defaultVal(
 				iterateMap(
 					compose(
@@ -30,7 +30,7 @@ public final class ModMetadata {
 							identity(String.class),
 							compose(
 								cast(DataString.class, STRING),
-								Codecs.VERSION_EXPR
+								FumoCodecs.VERSION_EXPR
 							)
 						),
 						function(ModVersionExpression::ofEntry, ModVersionExpression.class)
@@ -40,7 +40,7 @@ public final class ModMetadata {
 				HashSet::new
 			);
 	
-	public static Codec<DataObject, ModMetadata> codec(Path root, boolean forced) {
+	public static FumoCodec<DataObject, ModMetadata> codec(Path root, boolean forced) {
 		return multi(
 			Util.mhc(ModMetadata.class), ModMetadata.class,
 			entry(
@@ -59,7 +59,7 @@ public final class ModMetadata {
 				constant("version"),
 				compose(
 					STRING,
-					Codecs.VERSION
+					FumoCodecs.VERSION
 				),
 				DataString.class,
 				true

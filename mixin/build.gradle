@@ -1,0 +1,7 @@
+archivesBaseName = "fumo-mixin"
+version = "0.1.0"
+
+dependencies {
+	api "org.spongepowered:mixin:0.8.4"
+	implementation project(":core")
+}

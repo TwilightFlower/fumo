@@ -15,19 +15,19 @@ import io.github.twilightflower.fumo.core.api.FumoLoader;
 import io.github.twilightflower.fumo.core.api.data.DataList;
 import io.github.twilightflower.fumo.core.api.data.DataObject;
 import io.github.twilightflower.fumo.core.api.data.DataString;
-import io.github.twilightflower.fumo.core.api.data.codec.Codec;
+import io.github.twilightflower.fumo.core.api.data.codec.FumoCodec;
 import io.github.twilightflower.fumo.core.api.mod.ModMetadata;
 import io.github.twilightflower.fumo.core.api.plugin.FumoLoaderPlugin;
 import io.github.twilightflower.fumo.core.api.plugin.PluginMetadata;
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
-import static io.github.twilightflower.fumo.core.api.data.codec.Codec.*;
+import static io.github.twilightflower.fumo.core.api.data.codec.FumoCodec.*;
 
 /**
  * Handles loading other plugins and mods from the mods folder.
  */
 public class BasePlugin implements FumoLoaderPlugin {
-	private static final Codec<DataObject, Set<String>> JIJ_CODEC = 
+	private static final FumoCodec<DataObject, Set<String>> JIJ_CODEC = 
 		entry(
 			constant("fumo"),
 			entry(
@@ -107,7 +107,10 @@ public class BasePlugin implements FumoLoaderPlugin {
 					Path jarNested = jijFolder.resolve(jij);
 					Path jarInMemory = extractTo.resolve(jij);
 					Files.copy(jarNested, jarInMemory);
-					tryLoadModFromJar(jarInMemory, false);
+					ModMetadata loaded = tryLoadModFromJar(jarInMemory, false);
+					if(loaded != null) {
+						discovered.add(loaded);
+					}
 				}
 			} catch(IOException e) {
 				throw new RuntimeException("Exception loading jar-in-jar mods for mod " + mod.getId(), e);

@@ -19,49 +19,49 @@ import io.github.twilightflower.fumo.core.api.data.DataString;
 import io.github.twilightflower.fumo.core.api.util.Pair;
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
-public interface Codec<T, U> {
-	Codec<DataInt, Integer> INT = function(DataInt::getIntValue, Integer.class);
-	Codec<DataNumeric, Double> DOUBLE = function(DataNumeric::getValue, Double.class);
-	Codec<DataString, String> STRING = function(DataString::getValue, String.class);
-	Codec<DataBoolean, Boolean> BOOLEAN = function(DataBoolean::getValue, Boolean.class);
+public interface FumoCodec<T, U> {
+	FumoCodec<DataInt, Integer> INT = function(DataInt::getIntValue, Integer.class);
+	FumoCodec<DataNumeric, Double> DOUBLE = function(DataNumeric::getValue, Double.class);
+	FumoCodec<DataString, String> STRING = function(DataString::getValue, String.class);
+	FumoCodec<DataBoolean, Boolean> BOOLEAN = function(DataBoolean::getValue, Boolean.class);
 	
-	static <T, U> Codec<T, U> function(Function<? super T, ? extends U> fn, Class<U> outputType) {
+	static <T, U> FumoCodec<T, U> function(Function<? super T, ? extends U> fn, Class<U> outputType) {
 		return new FunctionCodec<>(fn, outputType);
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U> Codec<T, U> constant(U constant) {
+	static <T, U> FumoCodec<T, U> constant(U constant) {
 		return function(t -> constant, (Class<U>) constant.getClass());
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U> Codec<T, U> coerce(Codec<? super T, ? extends U> from) {
-		return (Codec<T, U>) from;
+	static <T, U> FumoCodec<T, U> coerce(FumoCodec<? super T, ? extends U> from) {
+		return (FumoCodec<T, U>) from;
 	}
 	
-	static <T> Codec<T, T> identity(Class<T> type) {
+	static <T> FumoCodec<T, T> identity(Class<T> type) {
 		return function(t -> t, type);
 	}
 	
-	static <T, U> Codec<T, U> defaultVal(Codec<? super T, U> codec, Supplier<U> def) {
+	static <T, U> FumoCodec<T, U> defaultVal(FumoCodec<? super T, U> codec, Supplier<U> def) {
 		return function(t -> t != null ? codec.decode(t) : def.get(), codec.getOutputType());
 	}
 	
-	static <T, U> Codec<T, U> propogateNull(Codec<? super T, U> codec) {
+	static <T, U> FumoCodec<T, U> propogateNull(FumoCodec<? super T, U> codec) {
 		return function(t -> t != null ? codec.decode(t) : null, codec.getOutputType());
 	}
 	
-	static <T, U, V> Codec<T, V> compose(Codec<? super T, U> first, Codec<? super U, V> second) {
+	static <T, U, V> FumoCodec<T, V> compose(FumoCodec<? super T, U> first, FumoCodec<? super U, V> second) {
 		return function(t -> second.decode(first.decode(t)), second.getOutputType());
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U, X, Y> Codec<Map.Entry<T, U>, Map.Entry<X, Y>> pair(Codec<? super T, ? extends X> leftCodec, Codec<? super U, ? extends Y> rightCodec) {
+	static <T, U, X, Y> FumoCodec<Map.Entry<T, U>, Map.Entry<X, Y>> pair(FumoCodec<? super T, ? extends X> leftCodec, FumoCodec<? super U, ? extends Y> rightCodec) {
 		return function(t -> Pair.of(leftCodec.decode(t.getKey()), rightCodec.decode(t.getValue())), (Class<Map.Entry<X, Y>>) (Class<?>) Map.Entry.class);
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, C extends T, U> Codec<T, U> cast(Class<C> castTo, Codec<? super C, U> then) {
+	static <T, C extends T, U> FumoCodec<T, U> cast(Class<C> castTo, FumoCodec<? super C, U> then) {
 		return function(t -> {
 			if(!castTo.isAssignableFrom(t.getClass())) {
 				throw new ClassCastException(String.format("Value type mismatch: expected %s, found %s", castTo.getName(), t.getClass().getName()));
@@ -70,21 +70,21 @@ public interface Codec<T, U> {
 		}, then.getOutputType());
 	}
 	
-	static <K, V, U> Codec<Map<K, V>, Collection<U>> iterateMap(Codec<Map.Entry<K, V>, U> entryCodec) {
+	static <K, V, U> FumoCodec<Map<K, V>, Collection<U>> iterateMap(FumoCodec<Map.Entry<K, V>, U> entryCodec) {
 		return iterateMap(entryCodec, ArrayList::new);
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <K, V, U, C extends Collection<U>> Codec<Map<K, V>, C> iterateMap(Codec<Map.Entry<K, V>, U> entryCodec, Supplier<C> collectionSupplier) {
+	static <K, V, U, C extends Collection<U>> FumoCodec<Map<K, V>, C> iterateMap(FumoCodec<Map.Entry<K, V>, U> entryCodec, Supplier<C> collectionSupplier) {
 		return compose(function(m -> m.entrySet(), (Class<Set<Map.Entry<K, V>>>) (Class<?>) Set.class), iterate(entryCodec, collectionSupplier));
 	}
 	
-	static <K, V, T> Codec<Map<K, V>, Map<K, T>> onValues(Codec<? super V, ? extends T> valueCodec) {
+	static <K, V, T> FumoCodec<Map<K, V>, Map<K, T>> onValues(FumoCodec<? super V, ? extends T> valueCodec) {
 		return onValues(valueCodec, HashMap::new);
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <K, V, T, M extends Map<K, T>> Codec<Map<K, V>, M> onValues(Codec<? super V, ? extends T> valueCodec, Supplier<M> mapSupplier) {
+	static <K, V, T, M extends Map<K, T>> FumoCodec<Map<K, V>, M> onValues(FumoCodec<? super V, ? extends T> valueCodec, Supplier<M> mapSupplier) {
 		return function((Map<K, V> m) -> {
 			M map = mapSupplier.get();
 			for(Map.Entry<K, V> entry : m.entrySet()) {
@@ -94,12 +94,12 @@ public interface Codec<T, U> {
 		}, (Class<M>) mapSupplier.get().getClass());
 	}
 	
-	static <T, U> Codec<Iterable<T>, List<U>> iterate(Codec<? super T, ? extends U> elementCodec) {
+	static <T, U> FumoCodec<Iterable<T>, List<U>> iterate(FumoCodec<? super T, ? extends U> elementCodec) {
 		return iterate(elementCodec, ArrayList::new);
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U, C extends Collection<U>> Codec<Iterable<T>, C> iterate(Codec<? super T, ? extends U> elementCodec, Supplier<C> collectionSupplier) {
+	static <T, U, C extends Collection<U>> FumoCodec<Iterable<T>, C> iterate(FumoCodec<? super T, ? extends U> elementCodec, Supplier<C> collectionSupplier) {
 		return function(it -> {
 			C collection = collectionSupplier.get();
 			for(T t : it) {
@@ -110,10 +110,10 @@ public interface Codec<T, U> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U> Codec<T, List<U>> list(Codec<? super T, ? extends U>... codecs) {
+	static <T, U> FumoCodec<T, List<U>> list(FumoCodec<? super T, ? extends U>... codecs) {
 		return function(t -> {
 			List<U> list = new ArrayList<>();
-			for(Codec<? super T, ? extends U> codec : codecs) {
+			for(FumoCodec<? super T, ? extends U> codec : codecs) {
 				list.add(codec.decode(t));
 			}
 			return list;
@@ -121,7 +121,7 @@ public interface Codec<T, U> {
 	}
 	
 	@SafeVarargs
-	static <T, U> Codec<T, U> multi(MethodHandle mh, Class<U> type, Codec<? super T, ?>... codecs) {
+	static <T, U> FumoCodec<T, U> multi(MethodHandle mh, Class<U> type, FumoCodec<? super T, ?>... codecs) {
 		MethodType mType = mh.type();
 		Class<?>[] types = mType.parameterArray();
 		if(types.length != codecs.length) {
@@ -129,7 +129,7 @@ public interface Codec<T, U> {
 		}
 		
 		for(int i = 0; i < codecs.length; i++) {
-			Codec<? super T, ?> codec = codecs[i];
+			FumoCodec<? super T, ?> codec = codecs[i];
 			if(!types[i].isAssignableFrom(codec.getOutputType())) {
 				throw new RuntimeException(String.format("Passed method cannot accept codec's output type at position %d (codec: %s, method: %s)", i, codec.getOutputType().getName(), types[i].getName()));
 			}
@@ -151,7 +151,7 @@ public interface Codec<T, U> {
 		}), type);
 	}
 	
-	static <T, U, K, M extends Map<K, ?>> Codec<M, U> entry(Codec<? super M, K> keyCodec, Codec<? super T, U> entryCodec, Class<T> entryType, boolean require) {
+	static <T, U, K, M extends Map<K, ?>> FumoCodec<M, U> entry(FumoCodec<? super M, K> keyCodec, FumoCodec<? super T, U> entryCodec, Class<T> entryType, boolean require) {
 		return function(obj -> {
 			K key = keyCodec.decode(obj);
 			Object val = obj.get(key);
@@ -171,10 +171,10 @@ public interface Codec<T, U> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	static <T, U, K> Codec<T, Map<K, U>> map(Codec<? super T, Pair<K, U>>... entryCodecs) {
+	static <T, U, K> FumoCodec<T, Map<K, U>> map(FumoCodec<? super T, Pair<K, U>>... entryCodecs) {
 		return function(t -> {
 			Map<K, U> map = new HashMap<>();
-			for(Codec<? super T, Pair<K, U>> codec : entryCodecs) {
+			for(FumoCodec<? super T, Pair<K, U>> codec : entryCodecs) {
 				Pair<K, U> val = codec.decode(t);
 				map.put(val.left(), val.right());
 			}

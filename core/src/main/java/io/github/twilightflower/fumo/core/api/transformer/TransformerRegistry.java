@@ -3,14 +3,14 @@ package io.github.twilightflower.fumo.core.api.transformer;
 import java.util.Collections;
 import java.util.Set;
 
-import io.github.twilightflower.fumo.core.api.Identifier;
+import io.github.twilightflower.fumo.core.api.FumoIdentifier;
 
 public interface TransformerRegistry {
-	default void registerTransformer(Identifier id, ClassTransformer transformer) {
+	default void registerTransformer(FumoIdentifier id, ClassTransformer transformer) {
 		registerTransformer(id, transformer, Collections.emptySet());
 	}
-	default void registerTransformer(Identifier id, ClassTransformer transformer, Set<Identifier> runBefore) {
+	default void registerTransformer(FumoIdentifier id, ClassTransformer transformer, Set<FumoIdentifier> runBefore) {
 		registerTransformer(id, transformer, runBefore, Collections.emptySet());
 	}
-	void registerTransformer(Identifier id, ClassTransformer transformer, Set<Identifier> runBefore, Set<Identifier> runAfter);
+	void registerTransformer(FumoIdentifier id, ClassTransformer transformer, Set<FumoIdentifier> runBefore, Set<FumoIdentifier> runAfter);
 }

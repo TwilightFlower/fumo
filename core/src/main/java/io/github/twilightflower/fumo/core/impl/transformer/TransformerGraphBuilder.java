@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import io.github.twilightflower.fumo.core.api.Identifier;
+import io.github.twilightflower.fumo.core.api.FumoIdentifier;
 import io.github.twilightflower.fumo.core.api.transformer.ClassTransformer;
 import io.github.twilightflower.fumo.core.api.transformer.TransformerRegistry;
 
@@ -16,28 +16,28 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 	private final Set<UnresolvedNode> nodes = new HashSet<>();
 	
 	@Override
-	public void registerTransformer(Identifier id, ClassTransformer transformer, Set<Identifier> runBefore, Set<Identifier> runAfter) {
+	public void registerTransformer(FumoIdentifier id, ClassTransformer transformer, Set<FumoIdentifier> runBefore, Set<FumoIdentifier> runAfter) {
 		if(!nodes.add(new UnresolvedNode(id, transformer, runBefore, runAfter))) {
 			throw new IllegalArgumentException(String.format("Transformer with ID %s already exists!", id));
 		}
 	}
 	
 	public List<ClassTransformer> resolve() {
-		Map<Identifier, Node> resolvedNodes = new HashMap<>();
+		Map<FumoIdentifier, Node> resolvedNodes = new HashMap<>();
 		for(UnresolvedNode unode : nodes) {
 			resolvedNodes.put(unode.id, new Node(unode.transformer, unode.id));
 		}
 		// build the graph of nodes. Parents run first.
 		for(UnresolvedNode unode : nodes) {
 			Node resolved = resolvedNodes.get(unode.id);
-			for(Identifier id : unode.runBefore) {
+			for(FumoIdentifier id : unode.runBefore) {
 				Node link = resolvedNodes.get(id);
 				if(link != null) {
 					resolved.children.add(link);
 					link.parents.add(resolved);
 				}
 			}
-			for(Identifier id : unode.runAfter) {
+			for(FumoIdentifier id : unode.runAfter) {
 				Node link = resolvedNodes.get(id);
 				if(link != null) {
 					resolved.parents.add(link);
@@ -115,11 +115,11 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 	}
 		
 	private static class UnresolvedNode {
-		private final Set<Identifier> runBefore, runAfter;
-		private final Identifier id;
+		private final Set<FumoIdentifier> runBefore, runAfter;
+		private final FumoIdentifier id;
 		private final ClassTransformer transformer;
 		
-		UnresolvedNode(Identifier id, ClassTransformer transformer, Set<Identifier> runBefore, Set<Identifier> runAfter) {
+		UnresolvedNode(FumoIdentifier id, ClassTransformer transformer, Set<FumoIdentifier> runBefore, Set<FumoIdentifier> runAfter) {
 			this.id = id;
 			this.transformer = transformer;
 			this.runAfter = runAfter;
@@ -152,9 +152,9 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 	private static class Node {
 		private final Set<Node> parents = new HashSet<>(), children = new HashSet<>();
 		private final ClassTransformer transformer;
-		private final Identifier id;
+		private final FumoIdentifier id;
 		
-		Node(ClassTransformer transformer, Identifier id) {
+		Node(ClassTransformer transformer, FumoIdentifier id) {
 			this.transformer = transformer;
 			this.id = id;
 		}

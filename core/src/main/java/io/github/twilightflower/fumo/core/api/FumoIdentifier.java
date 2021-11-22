@@ -2,11 +2,11 @@ package io.github.twilightflower.fumo.core.api;
 
 import java.util.Objects;
 
-public final class Identifier {
+public final class FumoIdentifier {
 	private final String namespace, path;
 	private final int hashCode;
 	
-	public Identifier(String namespace, String path) {
+	public FumoIdentifier(String namespace, String path) {
 		Objects.requireNonNull(namespace, "Identifier namespace must not be null");
 		Objects.requireNonNull(path, "Identifier path must not be null");
 		this.namespace = namespace;
@@ -14,12 +14,12 @@ public final class Identifier {
 		this.hashCode = (namespace.hashCode() * 29) ^ path.hashCode(); 
 	}
 	
-	public static Identifier fromString(String str) {
+	public static FumoIdentifier fromString(String str) {
 		String[] spl = str.split(":", 2);
 		if(spl.length < 2) {
 			throw new IllegalArgumentException(String.format("String \"%s\" is not a valid Identifier", str));
 		}
-		return new Identifier(spl[0], spl[1]);
+		return new FumoIdentifier(spl[0], spl[1]);
 	}
 	
 	@Override
@@ -29,8 +29,8 @@ public final class Identifier {
 	
 	@Override
 	public boolean equals(Object other) {
-		if(!(other instanceof Identifier)) return false;
-		Identifier o = (Identifier) other;
+		if(!(other instanceof FumoIdentifier)) return false;
+		FumoIdentifier o = (FumoIdentifier) other;
 		return o.hashCode == hashCode && o.namespace.equals(namespace) & o.path.equals(path);
 	}
 	

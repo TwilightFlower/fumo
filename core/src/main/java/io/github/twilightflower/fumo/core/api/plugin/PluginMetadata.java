@@ -1,6 +1,6 @@
 package io.github.twilightflower.fumo.core.api.plugin;
 
-import static io.github.twilightflower.fumo.core.api.data.codec.Codec.*;
+import static io.github.twilightflower.fumo.core.api.data.codec.FumoCodec.*;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -13,12 +13,12 @@ import com.github.zafarkhaja.semver.Version;
 
 import io.github.twilightflower.fumo.core.api.data.DataObject;
 import io.github.twilightflower.fumo.core.api.data.DataString;
-import io.github.twilightflower.fumo.core.api.data.codec.Codec;
-import io.github.twilightflower.fumo.core.impl.util.Codecs;
+import io.github.twilightflower.fumo.core.api.data.codec.FumoCodec;
+import io.github.twilightflower.fumo.core.impl.util.FumoCodecs;
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
 public final class PluginMetadata {
-	public static Codec<DataObject, PluginMetadata> codec(Path root) {
+	public static FumoCodec<DataObject, PluginMetadata> codec(Path root) {
 		return multi(
 			Util.mhc(PluginMetadata.class), PluginMetadata.class,
 			entry(
@@ -41,7 +41,7 @@ public final class PluginMetadata {
 			),
 			entry(
 				constant("version"),
-				compose(STRING, Codecs.VERSION),
+				compose(STRING, FumoCodecs.VERSION),
 				DataString.class,
 				true
 			),

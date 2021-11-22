@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.github.twilightflower.fumo.core.api.FumoLoader;
-import io.github.twilightflower.fumo.core.api.Identifier;
+import io.github.twilightflower.fumo.core.api.FumoIdentifier;
 import io.github.twilightflower.fumo.core.api.LaunchProvider;
 import io.github.twilightflower.fumo.core.api.LoaderState;
 import io.github.twilightflower.fumo.core.api.mod.ModMetadata;
@@ -32,23 +32,24 @@ import io.github.twilightflower.fumo.core.impl.transformer.jar.TransformingNioCl
 import io.github.twilightflower.fumo.core.impl.util.KOTHMap;
 
 /**
- * The loader-side implementation of FumoLoader.
+ * The implementation of FumoLoader.
  */
 public class FumoLoaderImpl implements FumoLoader {
+	public static final FumoLoaderImpl INSTANCE = new FumoLoaderImpl();
+	
 	private LoaderState state = LoaderState.INIT;
 	private final Path modsDir;
 	private final Path configDir;
 	private final Map<String, PluginContainer> plugins = new HashMap<>();
 	private final Map<String, ModMetadata> mods = new HashMap<>();
-	private final Map<Identifier, LaunchProvider> launchProviders = new HashMap<>();
+	private final Map<FumoIdentifier, LaunchProvider> launchProviders = new HashMap<>();
 	private InternalClassTransformer classTransformer;
 	
 	public static void bootstrapped(String[] args, Set<Path> targetPaths) {
-		FumoLoaderImpl loader = new FumoLoaderImpl();
-		loader.loadPlugins();
-		loader.loadMods();
-		loader.registerTransformers();
-		loader.launch(args, targetPaths);
+		INSTANCE.loadPlugins();
+		INSTANCE.loadMods();
+		INSTANCE.registerTransformers();
+		INSTANCE.launch(args, targetPaths);
 	}
 	
 	public FumoLoaderImpl() {
@@ -166,7 +167,7 @@ public class FumoLoaderImpl implements FumoLoader {
 			targetRoots.add(mod.getRoot());
 		}
 		
-		TransformingNioClassLoader targetLoader = new TransformingNioClassLoader(targetRoots, null, classTransformer);
+		TransformingNioClassLoader targetLoader = new TransformingNioClassLoader(targetRoots, getClass().getClassLoader(), classTransformer);
 		
 		for(PluginContainer pluginContainer : plugins.values()) {
 			pluginContainer.getPlugin().preLaunch(targetLoader);
@@ -187,7 +188,7 @@ public class FumoLoaderImpl implements FumoLoader {
 	
 	private LaunchProvider chooseLaunchProvider(ClassLoader target, String[] programArgs) {
 		if(System.getProperties().containsKey("fumo.launch.provider")) {
-			Identifier sysProperty = Identifier.fromString(System.getProperty("fumo.launch.provider"));
+			FumoIdentifier sysProperty = FumoIdentifier.fromString(System.getProperty("fumo.launch.provider"));
 			LaunchProvider lp = launchProviders.get(sysProperty);
 			if(lp == null) {
 				throw new RuntimeException(String.format("Launch provider %s explicitly used via system property, but not installed!", sysProperty.toString()));
@@ -252,7 +253,7 @@ public class FumoLoaderImpl implements FumoLoader {
 	}
 
 	@Override
-	public void registerLaunchProvider(Identifier id, LaunchProvider provider) throws IllegalStateException {
+	public void registerLaunchProvider(FumoIdentifier id, LaunchProvider provider) throws IllegalStateException {
 		state.ensureIsBefore(LoaderState.PRELAUNCH);
 		launchProviders.put(id, provider);
 	}
@@ -265,5 +266,11 @@ public class FumoLoaderImpl implements FumoLoader {
 	@Override
 	public Path getConfigDir() {
 		return configDir;
+	}
+
+	@Override
+	public ModMetadata getMod(String modId) throws IllegalStateException {
+		state.ensureAccessMods();
+		return mods.get(modId);
 	}
 }
