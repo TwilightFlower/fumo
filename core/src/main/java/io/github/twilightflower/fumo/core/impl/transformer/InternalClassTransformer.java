@@ -1,4 +1,4 @@
-package io.github.twilightflower.fumo.core.impl.transformer.jar;
+package io.github.twilightflower.fumo.core.impl.transformer;
 
 import java.io.IOException;
 import java.io.InputStream;

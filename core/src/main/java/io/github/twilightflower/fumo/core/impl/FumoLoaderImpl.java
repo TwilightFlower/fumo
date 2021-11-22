@@ -9,12 +9,15 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.objectweb.asm.tree.ClassNode;
 
 import io.github.twilightflower.fumo.core.api.FumoLoader;
 import io.github.twilightflower.fumo.core.api.FumoIdentifier;
@@ -24,11 +27,11 @@ import io.github.twilightflower.fumo.core.api.mod.ModMetadata;
 import io.github.twilightflower.fumo.core.api.plugin.FumoLoaderPlugin;
 import io.github.twilightflower.fumo.core.api.plugin.PluginContainer;
 import io.github.twilightflower.fumo.core.api.plugin.PluginMetadata;
+import io.github.twilightflower.fumo.core.api.transformer.ClassTransformer;
 import io.github.twilightflower.fumo.core.impl.plugin.PluginContainerImpl;
 import io.github.twilightflower.fumo.core.impl.transformer.FumoTransformerImpl;
 import io.github.twilightflower.fumo.core.impl.transformer.TransformerGraphBuilder;
-import io.github.twilightflower.fumo.core.impl.transformer.jar.InternalClassTransformer;
-import io.github.twilightflower.fumo.core.impl.transformer.jar.TransformingNioClassLoader;
+import io.github.twilightflower.fumo.core.impl.transformer.TransformingNioClassLoader;
 import io.github.twilightflower.fumo.core.impl.util.KOTHMap;
 
 /**
@@ -43,7 +46,9 @@ public class FumoLoaderImpl implements FumoLoader {
 	private final Map<String, PluginContainer> plugins = new HashMap<>();
 	private final Map<String, ModMetadata> mods = new HashMap<>();
 	private final Map<FumoIdentifier, LaunchProvider> launchProviders = new HashMap<>();
-	private InternalClassTransformer classTransformer;
+	private FumoTransformerImpl classTransformer;
+	private TransformingNioClassLoader pluginClassLoader;
+	private TransformingNioClassLoader targetLoader;
 	
 	public static void bootstrapped(String[] args, Set<Path> targetPaths) {
 		INSTANCE.loadPlugins();
@@ -78,7 +83,7 @@ public class FumoLoaderImpl implements FumoLoader {
 		state = LoaderState.LOADING_PLUGINS;
 		loadClasspathPlugins();
 		
-		TransformingNioClassLoader pluginClassLoader = new TransformingNioClassLoader(Collections.emptyList(), getClass().getClassLoader());
+		pluginClassLoader = new TransformingNioClassLoader(Collections.emptyList(), getClass().getClassLoader());
 		
 		Set<PluginContainer> askForPlugins = new HashSet<>();
 		askForPlugins.addAll(plugins.values());
@@ -167,7 +172,7 @@ public class FumoLoaderImpl implements FumoLoader {
 			targetRoots.add(mod.getRoot());
 		}
 		
-		TransformingNioClassLoader targetLoader = new TransformingNioClassLoader(targetRoots, getClass().getClassLoader(), classTransformer);
+		targetLoader = new TransformingNioClassLoader(targetRoots, pluginClassLoader, classTransformer);
 		
 		for(PluginContainer pluginContainer : plugins.values()) {
 			pluginContainer.getPlugin().preLaunch(targetLoader);
@@ -177,7 +182,7 @@ public class FumoLoaderImpl implements FumoLoader {
 		
 		Class<?> mainClass = launchProvider.getMainClass(targetLoader);
 		try {
-			Method main = mainClass.getMethod("main", String.class);
+			Method main = mainClass.getMethod("main", String[].class);
 			main.invoke(null, (Object) programArgs);
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException e) {
 			throw new RuntimeException("Exception launching target", e);
@@ -272,5 +277,44 @@ public class FumoLoaderImpl implements FumoLoader {
 	public ModMetadata getMod(String modId) throws IllegalStateException {
 		state.ensureAccessMods();
 		return mods.get(modId);
+	}
+
+	@Override
+	public boolean transformsClass(String className) {
+		state.ensureAccessTransformers();
+		return classTransformer.transforms(className);
+	}
+
+	@Override
+	public ClassNode transformClass(String className, ClassNode clazz) {
+		state.ensureAccessTransformers();
+		return classTransformer.transform(className, clazz);
+	}
+	
+	public ClassNode transformUntil(String className, ClassNode clazz, ClassTransformer transformer) {
+		state.ensureAccessTransformers();
+		return classTransformer.transformUntil(className, clazz, transformer);
+	}
+
+	@Override
+	public ClassLoader getTargetClassloader() throws IllegalStateException {
+		state.ensureAtLeast(LoaderState.PRELAUNCH);
+		return targetLoader;
+	}
+
+	@Override
+	public ClassLoader getPluginClassloader() throws IllegalStateException {
+		state.ensureAccessPlugins();
+		return pluginClassLoader;
+	}
+
+	@Override
+	public Collection<PluginContainer> getAllPlugins() throws IllegalStateException {
+		return Collections.unmodifiableCollection(plugins.values());
+	}
+
+	@Override
+	public Collection<ModMetadata> getAllMods() throws IllegalStateException {
+		return Collections.unmodifiableCollection(mods.values());
 	}
 }

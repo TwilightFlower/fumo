@@ -30,6 +30,26 @@ public enum LoaderState {
 		}
 	}
 	
+	public boolean isAtLeast(LoaderState other) {
+		return this.ordinal() >= other.ordinal();
+	}
+	
+	public void ensureAtLeast(LoaderState other) {
+		if(!isAtLeast(other)) {
+			throw new IllegalStateException(String.format("Illegal state %s (must be at least %s)", name(), other.name()));
+		}
+	}
+	
+	public boolean isAtMost(LoaderState other) {
+		return this.ordinal() <= other.ordinal();
+	}
+	
+	public void ensureAtMost(LoaderState other) {
+		if(!isAtMost(other)) {
+			throw new IllegalStateException(String.format("Illegal state %s (must be at most %s)", name(), other.name()));
+		}
+	}
+	
 	public boolean accessPlugins() {
 		return isAfter(LOADING_PLUGINS);
 	}
