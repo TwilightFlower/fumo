@@ -8,12 +8,21 @@ subprojects {
 	
 	if(!project.name.contains('test')) {
 		apply plugin: 'maven-publish'
+		
+		publishing {
+			publications {
+				maven(MavenPublication) {
+					from components.java
+				}
+			}
+		}
 	}
 	
 	java {
 		toolchain {
 			languageVersion = JavaLanguageVersion.of(8)
 		}
+		withSourcesJar()
 	}
 	
 	repositories {
