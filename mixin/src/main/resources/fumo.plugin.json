@@ -1,5 +1,5 @@
 {
 	"id": "fumo-mixin",
 	"version": "0.1.0",
-	"plugin-class": "io.github.twilightflower.fumo.mixin.MixinLoaderPlugin"
+	"plugin-class": "io.github.twilightflower.fumo.mixin.FumoMixinService"
 }

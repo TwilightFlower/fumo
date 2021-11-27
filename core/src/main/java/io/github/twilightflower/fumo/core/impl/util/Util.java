@@ -11,8 +11,11 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -42,6 +45,18 @@ import io.github.twilightflower.fumo.core.api.data.DataString;
 public class Util {
 	private static final Gson GSON = new Gson();
 	private static final Parser<Expression> VERSION_EXPR_PARSER = ExpressionParser.newInstance();
+	private static final Map<Class<?>, Class<?>> BOX_MAP = new HashMap<>();
+	
+	static {
+		BOX_MAP.put(double.class, Double.class);
+		BOX_MAP.put(float.class, Float.class);
+		BOX_MAP.put(long.class, Long.class);
+		BOX_MAP.put(int.class, Integer.class);
+		BOX_MAP.put(short.class, Short.class);
+		BOX_MAP.put(char.class, Character.class);
+		BOX_MAP.put(byte.class, Byte.class);
+		BOX_MAP.put(boolean.class, Boolean.class);
+	}
 	
 	public static <T, U> Function<T, U> makeSneakyFunction(ExcFn<T, U, ?> ex) {
 		@SuppressWarnings("unchecked")
@@ -78,7 +93,7 @@ public class Util {
 		ByteArrayOutputStream os = new ByteArrayOutputStream();
 		byte[] buf = new byte[2048];
 		int read;
-		while((read = inStream.read(buf)) != 0) {
+		while((read = inStream.read(buf)) != -1) {
 			os.write(buf, 0, read);
 		}
 		return os.toByteArray();
@@ -139,6 +154,22 @@ public class Util {
 		return URI_URL.apply(uri);
 	}
 	
+	private static final Function<URL, URI> URL_URI = makeSneakyFunction(URL::toURI);
+	public static URI urlToURI(URL url) {
+		return URL_URI.apply(url);
+	}
+	
+	public static Path getRootFromUrl(URL url, int fileLength) throws IOException {
+		if(url.getProtocol().equals("jar")) {
+			String jarPath = url.getFile();
+			jarPath = url.getFile().substring(0, jarPath.length() - (fileLength + /* !/ */ 2));
+			FileSystem fs = FileSystems.newFileSystem(Paths.get(URI.create(jarPath)), Util.class.getClassLoader());
+			return fs.getPath("/");
+		} else {
+			return Paths.get(urlToURI(url)).getParent();
+		}
+	}
+	
 	public static <T> Enumeration<T> iteratorEnumeration(Iterator<T> iter) {
 		return new IteratorEnumeration<>(iter);
 	}
@@ -159,6 +190,10 @@ public class Util {
 			}
 		}
 		return map;
+	}
+	
+	public static Class<?> box(Class<?> clazz) {
+		return BOX_MAP.getOrDefault(clazz, clazz);
 	}
 	
 	public interface ExcFn<T, U, E extends Throwable> {

@@ -5,8 +5,8 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -33,6 +33,7 @@ import io.github.twilightflower.fumo.core.impl.transformer.FumoTransformerImpl;
 import io.github.twilightflower.fumo.core.impl.transformer.TransformerGraphBuilder;
 import io.github.twilightflower.fumo.core.impl.transformer.TransformingNioClassLoader;
 import io.github.twilightflower.fumo.core.impl.util.KOTHMap;
+import io.github.twilightflower.fumo.core.impl.util.Util;
 
 /**
  * The implementation of FumoLoader.
@@ -60,20 +61,29 @@ public class FumoLoaderImpl implements FumoLoader {
 	public FumoLoaderImpl() {
 		modsDir = Paths.get("mods");
 		configDir = Paths.get("config");
+		
+		try {
+			Files.createDirectories(modsDir);
+			Files.createDirectories(configDir);
+		} catch(IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void loadClasspathPlugins() {
 		try {
-			Enumeration<URL> urls = getClass().getClassLoader().getResources("fumo.plugin.json");
+			Enumeration<URL> urls = ClassLoader.getSystemResources("fumo.plugin.json");
+			int fileNameLength = "fumo.plugin.json".length();
 			while(urls.hasMoreElements()) {
 				URL url = urls.nextElement();
 				try(InputStream in = url.openStream()) {
-					Path pluginRoot = Paths.get(url.toURI()).getParent();
+					Path pluginRoot = Util.getRootFromUrl(url, fileNameLength);
+					pluginClassLoader.addRoot(pluginRoot);
 					PluginMetadata plugin = PluginMetadata.parse(pluginRoot, in);
-					plugins.put(plugin.getId(), loadPluginFromMeta(plugin, getClass().getClassLoader()));
+					plugins.put(plugin.getId(), loadPluginFromMeta(plugin, pluginClassLoader));
 				}
 			}
-		} catch (IOException | URISyntaxException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -81,9 +91,9 @@ public class FumoLoaderImpl implements FumoLoader {
 	public void loadPlugins() {
 		state.ensureIsBefore(LoaderState.LOADING_PLUGINS);
 		state = LoaderState.LOADING_PLUGINS;
-		loadClasspathPlugins();
 		
 		pluginClassLoader = new TransformingNioClassLoader(Collections.emptyList(), getClass().getClassLoader());
+		loadClasspathPlugins();
 		
 		Set<PluginContainer> askForPlugins = new HashSet<>();
 		askForPlugins.addAll(plugins.values());
@@ -172,7 +182,7 @@ public class FumoLoaderImpl implements FumoLoader {
 			targetRoots.add(mod.getRoot());
 		}
 		
-		targetLoader = new TransformingNioClassLoader(targetRoots, pluginClassLoader, classTransformer);
+		targetLoader = new TransformingNioClassLoader(targetRoots, getClass().getClassLoader(), classTransformer);
 		
 		for(PluginContainer pluginContainer : plugins.values()) {
 			pluginContainer.getPlugin().preLaunch(targetLoader);

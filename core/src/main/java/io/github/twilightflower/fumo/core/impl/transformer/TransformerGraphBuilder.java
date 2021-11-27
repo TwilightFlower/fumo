@@ -72,7 +72,7 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 					Node next = vse.children.poll();
 					visited.add(next);
 					stack.push(new VisitStackEntry(next));
-					if(!currentlyVisiting.add(n)) {
+					if(!currentlyVisiting.add(next)) {
 						throw new RuntimeException(String.format("circular transformer graph (%s circles back to %s)", vse.node.id, next.id));
 					}
 				}
@@ -104,8 +104,8 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 			if(evald.contains(node.node)) { // nodes can get pushed twice under certain circumstances
 				stack.pop();
 			} else {
-				if(!node.parents.isEmpty()) {
-					stack.push(new VisitStackEntry(node.parents.pop()));
+				if(!node.children.isEmpty()) {
+					stack.push(new VisitStackEntry(node.children.pop()));
 				} else {
 					evald.add(node.node);
 					addTo.add(node.node.transformer);
@@ -167,6 +167,10 @@ public class TransformerGraphBuilder implements TransformerRegistry {
 			if(!(other instanceof Node)) return false;
 			Node n = (Node) other;
 			return n.id.equals(id);
+		}
+		
+		public String toString() {
+			return id.toString();
 		}
 	}
 }

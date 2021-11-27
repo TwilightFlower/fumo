@@ -1,2 +1,10 @@
 archivesBaseName = "fumo-bootstrap"
 version = "0.1.0"
+
+sourceCompatibility = targetCompatibility = 1.8
+
+java {
+	toolchain {
+		languageVersion = null // we need to compile against JDK9
+	}
+}

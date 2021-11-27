@@ -70,7 +70,7 @@ public final class ModMetadata {
 				constant("requires"),
 				EXPR_CODEC,
 				DataObject.class,
-				true
+				false
 			),
 			entry(
 				constant("conflicts"),
@@ -95,8 +95,12 @@ public final class ModMetadata {
 		this.version = version;
 		this.data = data;
 		this.root = root;
-		this.requiresExprs.addAll(requiresExprs);
-		this.conflictsExprs.addAll(conflictsExprs);
+		if(requiresExprs != null) {
+			this.requiresExprs.addAll(requiresExprs);
+		}
+		if(conflictsExprs != null) {
+			this.conflictsExprs.addAll(conflictsExprs);
+		}
 		this.forced = forced;
 	}
 	

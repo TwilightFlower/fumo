@@ -130,12 +130,12 @@ public interface FumoCodec<T, U> {
 		
 		for(int i = 0; i < codecs.length; i++) {
 			FumoCodec<? super T, ?> codec = codecs[i];
-			if(!types[i].isAssignableFrom(codec.getOutputType())) {
+			if(!Util.box(types[i]).isAssignableFrom(codec.getOutputType())) {
 				throw new RuntimeException(String.format("Passed method cannot accept codec's output type at position %d (codec: %s, method: %s)", i, codec.getOutputType().getName(), types[i].getName()));
 			}
 		}
 		
-		if(!type.isAssignableFrom(mType.returnType())) {
+		if(!type.isAssignableFrom(Util.box(mType.returnType()))) {
 			throw new RuntimeException(String.format("Passed method does not have a return type matching the codec type. (Codec: %s, method: %s)", type.getName(), mType.returnType().getName()));
 		}
 		

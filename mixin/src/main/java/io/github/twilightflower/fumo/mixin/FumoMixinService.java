@@ -61,23 +61,18 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 		);
 	
 	private final ReEntranceLock lock = new ReEntranceLock(1);
-	private FumoLoader loader;
-	IMixinTransformerFactory transformerFactory;
-	IMixinTransformer transformer;
+	private static FumoLoader loader;
+	static IMixinTransformerFactory transformerFactory;
+	static IMixinTransformer transformer;
 	
-	ClassLoader gameLoader;
-	ClassLoader pluginLoader;
+	static ClassLoader gameLoader;
+	static ClassLoader pluginLoader;
 	
-	SideNameProvider sideNameProvider;
+	static SideNameProvider sideNameProvider;
 	
 	@Override
 	public void init(FumoLoader loader) {
-		this.loader = loader;
-	}
-	
-	@Override
-	public void pluginsLoaded() {
-		pluginLoader = loader.getPluginClassloader();
+		FumoMixinService.loader = loader;
 		
 		boolean found = false;
 		for(SideNameProvider p : ServiceLoader.load(SideNameProvider.class, pluginLoader)) {
@@ -95,6 +90,11 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 	}
 	
 	@Override
+	public void pluginsLoaded() {
+		pluginLoader = loader.getPluginClassloader();
+	}
+	
+	@Override
 	public void preLaunch(ClassLoader targetLoader) {
 		gameLoader = targetLoader;
 		
@@ -102,9 +102,11 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 		MixinEnvironment.init(Phase.DEFAULT);
 		
 		for(ModMetadata mod : loader.getAllMods()) {
+			System.out.println(mod.getId());
 			List<String> configs = MIXIN_CONFIGS.decode(mod.getData());
 			if(configs != null) {
 				for(String config : configs) {
+					System.out.println("Loaded mixin config " + config);
 					Mixins.addConfiguration(config);
 				}
 			}
@@ -234,7 +236,8 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 	@Override
 	public ClassNode getClassNode(String name, boolean runTransformers) throws ClassNotFoundException, IOException {
 		if(!runTransformers) {
-			try(InputStream clazz = getResourceAsStream(name)) {
+			String fileName = name.replace('.', '/') + ".class";
+			try(InputStream clazz = getResourceAsStream(fileName)) {
 				if(clazz == null) {
 					throw new ClassNotFoundException(name);
 				} else {

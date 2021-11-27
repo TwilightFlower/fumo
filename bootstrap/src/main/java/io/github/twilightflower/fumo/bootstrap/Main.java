@@ -20,7 +20,13 @@ public class Main {
 			Set<Path> targetPaths = bootstrap.targetPaths();
 			String[] args2 = bootstrap.args();
 			
-			ClassLoader loaderLoader = new URLClassLoader(loaderPaths.toArray(new URL[loaderPaths.size()]));
+			double javaVersion = Double.parseDouble(System.getProperty("java.specification.version"));
+			ClassLoader jdkLoader = null;
+			if(javaVersion > 8) {
+				jdkLoader = ClassLoader.getPlatformClassLoader();
+			}
+			
+			ClassLoader loaderLoader = new URLClassLoader(loaderPaths.toArray(new URL[loaderPaths.size()]), jdkLoader);
 			try {
 				Class<?> fumoMain = loaderLoader.loadClass("io.github.twilightflower.fumo.core.Main");
 				Method coreMain = fumoMain.getMethod("bootstrapped", String[].class, Set.class);

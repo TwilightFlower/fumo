@@ -1,10 +1,12 @@
 package io.github.twilightflower.fumo.core.impl.plugin;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -30,15 +32,21 @@ public class BasePlugin implements FumoLoaderPlugin {
 	private static final FumoCodec<DataObject, Set<String>> JIJ_CODEC = 
 		entry(
 			constant("fumo"),
-			entry(
-				constant("jij"),
-				iterate(
-					cast(DataString.class, STRING),
-					HashSet::new
+			defaultVal( 
+				entry(
+					constant("jij"),
+					defaultVal(
+						iterate(
+							cast(DataString.class, STRING),
+							HashSet::new
+						),
+						HashSet::new
+					),
+					DataList.class, false
 				),
-				DataList.class, true
+				HashSet::new
 			),
-			DataObject.class, true
+			DataObject.class, false
 		);
 	
 	private FumoLoader loader;
@@ -89,6 +97,16 @@ public class BasePlugin implements FumoLoaderPlugin {
 					if(loaded != null) {
 						discovered.add(loaded);
 					}
+				}
+				// classpath mods...
+				Enumeration<URL> urls = ClassLoader.getSystemResources("fumo.mod.json");
+				int fileNameLength = "fumo.mod.json".length();
+				while(urls.hasMoreElements()) {
+					URL url = urls.nextElement();
+					Path root = Util.getRootFromUrl(url, fileNameLength);
+					
+					ModMetadata metadata = ModMetadata.parse(url.openStream(), root, true);
+					discovered.add(metadata);
 				}
 			} catch(IOException e) {
 				throw new RuntimeException("Exception loading mods", e);
