@@ -250,7 +250,7 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 	@Override
 	public ClassNode transform(String className, ClassNode clazz) {
 		if(transformer.transformClass(MixinEnvironment.getCurrentEnvironment(), className, clazz)) {
-			transformContext.computeFrames(className);
+			transformContext.computeFrames(className.replace('.', '/'));
 		}
 		return clazz;
 	}

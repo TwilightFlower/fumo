@@ -1,6 +1,5 @@
 package io.github.twilightflower.fumo.core.impl.transformer;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 public interface InternalClassTransformer {

@@ -51,8 +51,8 @@ public class TransformCache {
 		if(maxs.contains(className)) {
 			flags |= ClassWriter.COMPUTE_MAXS;
 		}
-		return ClassWriter.COMPUTE_FRAMES; // TODO fix
-		//return flags;
+		
+		return flags;
 	}
 	
 	/**
