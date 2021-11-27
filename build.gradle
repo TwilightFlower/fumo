@@ -1,10 +1,12 @@
 plugins {
 	id 'eclipse'
+	id 'org.cadixdev.licenser' version '0.6.1' apply false
 }
 
 subprojects {
 	apply plugin: 'java-library'
 	apply plugin: 'eclipse'
+	apply plugin: 'org.cadixdev.licenser'
 	
 	if(!project.name.contains('test')) {
 		apply plugin: 'maven-publish'
