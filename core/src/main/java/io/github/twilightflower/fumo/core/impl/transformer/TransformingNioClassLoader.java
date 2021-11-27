@@ -1,6 +1,5 @@
 package io.github.twilightflower.fumo.core.impl.transformer;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -11,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.Function;
+
 import io.github.twilightflower.fumo.core.impl.util.Util;
 
 public class TransformingNioClassLoader extends SecureClassLoader {
@@ -21,6 +22,7 @@ public class TransformingNioClassLoader extends SecureClassLoader {
 		super(parent);
 		this.roots.addAll(roots);
 		this.transformer = transformer;
+		transformer.acceptClassGetter(Util.makeSneakyFunction(this::getClassBytes));
 	}
 	
 	public TransformingNioClassLoader(Collection<Path> roots, ClassLoader parent) {
@@ -36,22 +38,23 @@ public class TransformingNioClassLoader extends SecureClassLoader {
 	@Override
 	protected Class<?> findClass(String name) throws ClassNotFoundException {
 		String slashName = name.replace('.', '/');
-		String classFileName = slashName + ".class";
-		for(Path p : roots) {
-			Path classFilePath = p.resolve(classFileName);
-			if(Files.exists(classFilePath)) {
-				try(InputStream in = new BufferedInputStream(Files.newInputStream(classFilePath))) {
-					byte[] clazz;
-					if(transformer.transforms(name.replace('.', '/'))) {
-						clazz = transformer.transform(name, in);
-					} else {
-						clazz = Util.readStream(in);
-					}
-					return defineClass(name, clazz, 0, clazz.length);
-				} catch (IOException e) {
-					throw new ClassNotFoundException(name, e);
-				}
+		byte[] clazz;
+		if(transformer.transforms(slashName)) {
+			clazz = transformer.getTransformed(slashName);
+		} else {
+			clazz = getClassBytes(slashName);
+		}
+		return defineClass(name, clazz, 0, clazz.length);
+	}
+	
+	private byte[] getClassBytes(String name) throws ClassNotFoundException {
+		String classFileName = name + ".class";
+		try(InputStream in = getResourceAsStream(classFileName)) {
+			if(in != null) {
+				return Util.readStream(in);
 			}
+		} catch(IOException e) {
+			throw new ClassNotFoundException(name, e);
 		}
 		throw new ClassNotFoundException(name);
 	}
@@ -81,7 +84,10 @@ public class TransformingNioClassLoader extends SecureClassLoader {
 	
 	@Override
 	public InputStream getResourceAsStream(String loc) {
-		InputStream str = super.getResourceAsStream(loc);
+		InputStream str = null;
+		if(getParent() != null) {
+			str = getParent().getResourceAsStream(loc);
+		}
 		if(str == null) {
 			for(Path p : roots) {
 				Path resPath = p.resolve(loc);
@@ -99,13 +105,14 @@ public class TransformingNioClassLoader extends SecureClassLoader {
 	
 	private static class NoopTransformer implements InternalClassTransformer {
 		@Override
+		public void acceptClassGetter(Function<String, byte[]> resGetter) { }
+		@Override
 		public boolean transforms(String className) {
 			return false;
 		}
-
 		@Override
-		public byte[] transform(String className, InputStream clazz) throws IOException {
-			throw new UnsupportedOperationException();
+		public byte[] getTransformed(String className) {
+			return null;
 		}
 	}
 }

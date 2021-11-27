@@ -168,7 +168,7 @@ public class FumoLoaderImpl implements FumoLoader {
 			pluginContainer.getPlugin().registerTransformers(transformerBuilder);
 		}
 		
-		classTransformer = new FumoTransformerImpl(transformerBuilder.resolve());
+		classTransformer = new FumoTransformerImpl(transformerBuilder.resolve(), getClass().getClassLoader());
 	}
 	
 	public void launch(String[] programArgs, Set<Path> targetPaths) {
@@ -296,14 +296,14 @@ public class FumoLoaderImpl implements FumoLoader {
 	}
 
 	@Override
-	public ClassNode transformClass(String className, ClassNode clazz) {
+	public ClassNode getTransformedClass(String className) throws ClassNotFoundException {
 		state.ensureAccessTransformers();
-		return classTransformer.transform(className, clazz);
+		return classTransformer.transform(className);
 	}
 	
-	public ClassNode transformUntil(String className, ClassNode clazz, ClassTransformer transformer) {
+	public ClassNode transformUntil(String className, ClassTransformer transformer) throws ClassNotFoundException {
 		state.ensureAccessTransformers();
-		return classTransformer.transformUntil(className, clazz, transformer);
+		return classTransformer.transformUntil(className, transformer);
 	}
 
 	@Override

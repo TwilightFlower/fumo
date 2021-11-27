@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.launch.platform.container.ContainerHandleURI;
@@ -40,8 +39,8 @@ import io.github.twilightflower.fumo.core.api.data.codec.FumoCodec;
 import io.github.twilightflower.fumo.core.api.mod.ModMetadata;
 import io.github.twilightflower.fumo.core.api.plugin.FumoLoaderPlugin;
 import io.github.twilightflower.fumo.core.api.transformer.ClassTransformer;
+import io.github.twilightflower.fumo.core.api.transformer.TransformerContext;
 import io.github.twilightflower.fumo.core.api.transformer.TransformerRegistry;
-import io.github.twilightflower.fumo.core.impl.FumoLoaderImpl;
 import io.github.twilightflower.fumo.mixin.spi.SideNameProvider;
 
 import static io.github.twilightflower.fumo.core.api.data.codec.FumoCodec.*;
@@ -69,6 +68,7 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 	static ClassLoader pluginLoader;
 	
 	static SideNameProvider sideNameProvider;
+	static TransformerContext transformContext;
 	
 	@Override
 	public void init(FumoLoader loader) {
@@ -235,21 +235,10 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 
 	@Override
 	public ClassNode getClassNode(String name, boolean runTransformers) throws ClassNotFoundException, IOException {
-		if(!runTransformers) {
-			String fileName = name.replace('.', '/') + ".class";
-			try(InputStream clazz = getResourceAsStream(fileName)) {
-				if(clazz == null) {
-					throw new ClassNotFoundException(name);
-				} else {
-					ClassReader reader = new ClassReader(clazz);
-					ClassNode node = new ClassNode();
-					reader.accept(node, 0);
-					return node;
-				}
-			}
+		if(runTransformers) {
+			return transformContext.getOtherClass(name.replace('.', '/'));
 		} else {
-			ClassNode node = getClassNode(name, false);
-			return ((FumoLoaderImpl) loader).transformUntil(name, node, this);
+			return transformContext.getUntransformedClass(name.replace('.', '/'));
 		}
 	}
 
@@ -260,8 +249,15 @@ public class FumoMixinService implements IMixinService, IClassBytecodeProvider, 
 
 	@Override
 	public ClassNode transform(String className, ClassNode clazz) {
-		transformer.transformClass(MixinEnvironment.getCurrentEnvironment(), className, clazz);
+		if(transformer.transformClass(MixinEnvironment.getCurrentEnvironment(), className, clazz)) {
+			transformContext.computeFrames(className);
+		}
 		return clazz;
+	}
+	
+	@Override
+	public void acceptTransformerContext(TransformerContext context) {
+		transformContext = context;
 	}
 
 	@Deprecated

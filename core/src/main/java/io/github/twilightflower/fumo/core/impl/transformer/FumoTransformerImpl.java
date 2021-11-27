@@ -1,22 +1,26 @@
 package io.github.twilightflower.fumo.core.impl.transformer;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
+import java.util.function.Function;
 
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
 
 import io.github.twilightflower.fumo.core.api.transformer.ClassTransformer;
+import io.github.twilightflower.fumo.core.impl.util.Util;
 
 public class FumoTransformerImpl implements InternalClassTransformer {
 	private final List<ClassTransformer> transformers = new ArrayList<>();
+	private TransformCache cache;
+	private Map<String, byte[]> writtenCache = new HashMap<>();
+	private final ClassLoader parentLoader;
 	
-	public FumoTransformerImpl(List<ClassTransformer> transformers) {
+	public FumoTransformerImpl(List<ClassTransformer> transformers, ClassLoader parentLoader) {
 		this.transformers.addAll(transformers);
+		this.parentLoader = parentLoader;
 	}
 	
 	@Override
@@ -30,34 +34,25 @@ public class FumoTransformerImpl implements InternalClassTransformer {
 	}
 
 	@Override
-	public byte[] transform(String className, InputStream clazz) throws IOException {
-		ClassNode classNode = new ClassNode();
-		ClassReader reader = new ClassReader(clazz);
-		reader.accept(classNode, 0);
-		classNode = transform(className, classNode);
-		ClassWriter cw = new ClassWriter(0);
-		classNode.accept(cw);
-		return cw.toByteArray();
+	public byte[] getTransformed(String className) throws ClassNotFoundException {
+		return writtenCache.computeIfAbsent(className, Util.makeSneakyFunction(name -> {
+			ClassNode node = transform(name);
+			ClassWriter writer = new FumoClassWriter(cache, parentLoader, cache.getWriterFlags(className));
+			node.accept(writer);
+			return writer.toByteArray();
+		}));
 	}
 	
-	public ClassNode transform(String className, ClassNode classNode) {
-		for(ClassTransformer t : transformers) {
-			if(t.transforms(className)) {
-				classNode = t.transform(className, classNode);
-			}
-		}
-		return classNode;
+	public ClassNode transform(String className) throws ClassNotFoundException {
+		return cache.getTransformedClass(className);
 	}
 	
-	public ClassNode transformUntil(String className, ClassNode classNode, ClassTransformer transformer) {
-		for(ClassTransformer t : transformers) {
-			if(Objects.equals(t, transformer)) {
-				break;
-			}
-			if(t.transforms(className)) {
-				classNode = t.transform(className, classNode);
-			}
-		}
-		return classNode;
+	@Override
+	public void acceptClassGetter(Function<String, byte[]> getter) {
+		cache = new TransformCache(transformers, getter);
+	}
+	
+	public ClassNode transformUntil(String className, ClassTransformer transformer) throws ClassNotFoundException {
+		return cache.upTo(className, transformer == null ? 0 : transformers.indexOf(transformer));
 	}
 }

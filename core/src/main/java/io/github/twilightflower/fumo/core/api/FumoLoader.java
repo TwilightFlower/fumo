@@ -92,5 +92,5 @@ public interface FumoLoader {
 	void registerLaunchProvider(FumoIdentifier id, LaunchProvider provider) throws IllegalStateException;
 	
 	boolean transformsClass(String className);
-	ClassNode transformClass(String className, ClassNode clazz);
+	ClassNode getTransformedClass(String className) throws ClassNotFoundException;
 }

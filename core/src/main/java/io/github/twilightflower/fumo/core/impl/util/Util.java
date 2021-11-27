@@ -56,6 +56,10 @@ public class Util {
 		BOX_MAP.put(char.class, Character.class);
 		BOX_MAP.put(byte.class, Byte.class);
 		BOX_MAP.put(boolean.class, Boolean.class);
+	}	
+
+	public static <T> Iterator<T> concatIterators(Iterator<Iterator<T>> iters) {
+		return new MultiIterator<>(iters);
 	}
 	
 	public static <T, U> Function<T, U> makeSneakyFunction(ExcFn<T, U, ?> ex) {
@@ -219,6 +223,33 @@ public class Util {
 		@Override
 		public T nextElement() {
 			return iterator.next();
+		}
+	}
+	
+	private static class MultiIterator<T> implements Iterator<T> {
+		final Iterator<Iterator<T>> iterators;
+		Iterator<T> currentIterator;
+		MultiIterator(Iterator<Iterator<T>> iterators) {
+			this.iterators = iterators;
+		}
+		
+		private Iterator<T> getCurrentIter() {
+			if(!currentIterator.hasNext()) {
+				if(iterators.hasNext()) {
+					currentIterator = iterators.next();
+				}
+			}
+			return currentIterator;
+		}
+		
+		@Override
+		public boolean hasNext() {
+			return getCurrentIter().hasNext();
+		}
+
+		@Override
+		public T next() {
+			return getCurrentIter().next();
 		}
 	}
 }
